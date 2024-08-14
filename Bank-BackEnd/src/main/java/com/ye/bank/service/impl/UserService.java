@@ -2,6 +2,7 @@ package com.ye.bank.service.impl;
 
 import com.ye.bank.dto.AccountInfo;
 import com.ye.bank.dto.BankResponse;
+import com.ye.bank.dto.EmailDetails;
 import com.ye.bank.dto.UserRequest;
 import com.ye.bank.entity.UserEntity;
 import com.ye.bank.repository.UserRepo;
@@ -17,6 +18,9 @@ public class UserService implements IUserService {
 
     @Autowired
     private UserRepo userRepo;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public BankResponse createAccount(UserRequest userRequest) {
@@ -48,6 +52,17 @@ public class UserService implements IUserService {
                 .build();
 
         UserEntity savedUser = userRepo.save(newUser);
+
+        // send email alert
+        EmailDetails emailDetails = EmailDetails.builder()
+                .recipient(savedUser.getEmail())
+                .subject("Bank Account Creation")
+                .messageBody("Congratulation! Your Acocunt has been successfully created!\n Your Account Details \n "
+                        + savedUser.getFirstName() + " " + savedUser.getLastName() + " " + savedUser.getEmail() + " " + savedUser.getAccountNumber())
+                .build();
+
+        emailService.sendEmail(emailDetails);
+
 
         return BankResponse.builder()
                 .responseCode(AccountUtils.ACCOUNT_CREATION_CODE)
