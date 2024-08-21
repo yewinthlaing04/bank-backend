@@ -4,7 +4,7 @@
 
 - user registration
 - send email alert
-- credit and debit bank services
+- credit, debit, transaction bank services
 - generating bank statement , sending bank statement via email
 - securing bank application with JWT
 
@@ -15,4 +15,5 @@
 - Spring Security
 - Java
 - Lombok
+- Insomnia for Request
   
