@@ -192,4 +192,71 @@ public class UserService implements IUserService {
         }
 
     }
+
+    @Override
+    public BankResponse transaction(TransactionDto transactionDto) {
+
+        // get the account to debit
+        // check if the amount ( transfer ) is not more than current balance
+        // debit the account
+        // get the account to credit
+        // check the destination account and credit the account
+        // save
+
+        boolean isDestinationAccountExist = userRepo
+                .existsByAccountNumber(transactionDto.getDestinationAccountNumber());
+
+        if ( !isDestinationAccountExist ){
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                    .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                    .info(null)
+                    .build();
+        }
+
+        UserEntity sourceAccount = userRepo
+                .findByAccountNumber(transactionDto.getSourceAccountNumber());
+
+        if ( transactionDto.getAmount().compareTo(sourceAccount.getAccountBalance()) > 0 ){
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.INSUFFICIENT_BALANCE_CODE)
+                    .responseMessage(AccountUtils.INSUFFICIENT_BALANCE_MESSAGE)
+                    .info(null)
+                    .build();
+        }
+
+        sourceAccount.setAccountBalance(sourceAccount.getAccountBalance().subtract(transactionDto.getAmount()));
+
+        String sourceUsername = sourceAccount.getFirstName() + sourceAccount.getLastName();
+
+        userRepo.save(sourceAccount);
+        EmailDetails debitAlert = EmailDetails.builder()
+                .subject("DEBIT ALERT")
+                .recipient(sourceAccount.getEmail())
+                .messageBody("The sum of " + transactionDto.getAmount() +
+                        " has been deducted from your account to ! Your current balance is " + sourceAccount.getAccountBalance())
+                .build();
+        emailService.sendEmail(debitAlert);
+
+        UserEntity destinationAccount = userRepo.findByAccountNumber(transactionDto
+                .getDestinationAccountNumber());
+
+        destinationAccount.setAccountBalance( destinationAccount
+                .getAccountBalance().add(transactionDto.getAmount()));
+        userRepo.save(destinationAccount);
+        //String recipientName = destinationAccount.getFirstName() + destinationAccount.getLastName();
+        EmailDetails creditAlert = EmailDetails.builder()
+                .subject("CREDIT ALERT")
+                .recipient(destinationAccount.getEmail())
+                .messageBody("The sum of " + transactionDto.getAmount() +
+                        " has been sent to your account from " + sourceUsername)
+                .build();
+        emailService.sendEmail(creditAlert);
+
+        return BankResponse.builder()
+                .responseCode(AccountUtils.TRANSACTION_SUCCESSFUL_CODE)
+                .responseMessage(AccountUtils.TRANSACTION_SUCCESSFUL_MESSAGE)
+                .info(null)
+                .build();
+    }
 }

@@ -24,6 +24,10 @@ public class AccountUtils {
 
     public static final String ACCOUNT_DEBITED_SUCCESS_CODE = "007";
     public static final String ACCOUNT_DEBITED_SUCCESS_MESSAGE = "Debited account has been successfully created";
+
+    public static final String TRANSACTION_SUCCESSFUL_CODE = "008";
+    public static final String TRANSACTION_SUCCESSFUL_MESSAGE = "Transaction has been successfully created";
+
     // random 6 digit + year for creating bank account
     public static String generateAccountNumber(){
 

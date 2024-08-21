@@ -1,10 +1,6 @@
 package com.ye.bank.service;
 
-import com.ye.bank.dto.BankResponse;
-import com.ye.bank.dto.CreditDto;
-import com.ye.bank.dto.EnquiryRequest;
-import com.ye.bank.dto.UserRequest;
-
+import com.ye.bank.dto.*;
 
 
 public interface IUserService {
@@ -24,4 +20,6 @@ public interface IUserService {
     // withdraw money
     BankResponse debitAccount(CreditDto creditDto);
 
+    // transaction
+    BankResponse transaction( TransactionDto transactionDto);
 }
