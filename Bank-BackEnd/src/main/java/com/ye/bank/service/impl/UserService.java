@@ -20,6 +20,9 @@ public class UserService implements IUserService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private TransactionService transactionService;
+
     @Override
     public BankResponse createAccount(UserRequest userRequest) {
 
@@ -137,6 +140,15 @@ public class UserService implements IUserService {
         // save user
         userRepo.save(userToCredit);
 
+        // transaction save
+        TransactionSaveDto transactionSaveDto = TransactionSaveDto.builder()
+                .accountNumber(userToCredit.getAccountNumber())
+                .transactionType("CREDIT")
+                .amount(creditDto.getAmount())
+                .build();
+
+        transactionService.saveTransaction(transactionSaveDto);
+
         return BankResponse.builder()
                 .responseCode(AccountUtils.ACCOUNT_CREDITED_CODE)
                 .responseMessage(AccountUtils.ACCOUNT_CREDITED_MESSAGE)
@@ -180,6 +192,17 @@ public class UserService implements IUserService {
                     userToDeposit.getAccountBalance()
                             .subtract(creditDto.getAmount()));
             userRepo.save(userToDeposit);
+
+            // transaction save
+            TransactionSaveDto transactionSaveDto = TransactionSaveDto.builder()
+                    .accountNumber(userToDeposit.getAccountNumber())
+                    .transactionType("DEBIT")
+                    .amount(creditDto.getAmount())
+                    .build();
+
+            transactionService.saveTransaction(transactionSaveDto);
+
+
             return BankResponse.builder()
                     .responseCode(AccountUtils.ACCOUNT_DEBITED_SUCCESS_CODE)
                     .responseMessage(AccountUtils.ACCOUNT_DEBITED_SUCCESS_MESSAGE)
@@ -230,6 +253,8 @@ public class UserService implements IUserService {
         String sourceUsername = sourceAccount.getFirstName() + sourceAccount.getLastName();
 
         userRepo.save(sourceAccount);
+
+
         EmailDetails debitAlert = EmailDetails.builder()
                 .subject("DEBIT ALERT")
                 .recipient(sourceAccount.getEmail())
@@ -244,6 +269,9 @@ public class UserService implements IUserService {
         destinationAccount.setAccountBalance( destinationAccount
                 .getAccountBalance().add(transactionDto.getAmount()));
         userRepo.save(destinationAccount);
+
+
+
         //String recipientName = destinationAccount.getFirstName() + destinationAccount.getLastName();
         EmailDetails creditAlert = EmailDetails.builder()
                 .subject("CREDIT ALERT")
@@ -252,6 +280,15 @@ public class UserService implements IUserService {
                         " has been sent to your account from " + sourceUsername)
                 .build();
         emailService.sendEmail(creditAlert);
+
+        //save transaction
+        TransactionSaveDto transactionSaveDto = TransactionSaveDto.builder()
+                .accountNumber(destinationAccount.getAccountNumber())
+                .transactionType("CREDIT")
+                .amount(transactionDto.getAmount())
+                .build();
+
+        transactionService.saveTransaction(transactionSaveDto);
 
         return BankResponse.builder()
                 .responseCode(AccountUtils.TRANSACTION_SUCCESSFUL_CODE)

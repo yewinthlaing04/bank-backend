@@ -1,6 +1,7 @@
 package com.ye.bank.service;
 
 import com.ye.bank.dto.*;
+import org.springframework.transaction.annotation.Transactional;
 
 
 public interface IUserService {
@@ -21,5 +22,6 @@ public interface IUserService {
     BankResponse debitAccount(CreditDto creditDto);
 
     // transaction
+    @Transactional
     BankResponse transaction( TransactionDto transactionDto);
 }
