@@ -263,6 +263,14 @@ public class UserService implements IUserService {
                 .build();
         emailService.sendEmail(debitAlert);
 
+        TransactionSaveDto transactionSaveDto_Source = TransactionSaveDto.builder()
+                .accountNumber(sourceAccount.getAccountNumber())
+                .transactionType("DEBIT")
+                .amount(transactionDto.getAmount())
+                .build();
+
+        transactionService.saveTransaction(transactionSaveDto_Source);
+
         UserEntity destinationAccount = userRepo.findByAccountNumber(transactionDto
                 .getDestinationAccountNumber());
 
@@ -282,13 +290,13 @@ public class UserService implements IUserService {
         emailService.sendEmail(creditAlert);
 
         //save transaction
-        TransactionSaveDto transactionSaveDto = TransactionSaveDto.builder()
+        TransactionSaveDto transactionSaveDto_Destination = TransactionSaveDto.builder()
                 .accountNumber(destinationAccount.getAccountNumber())
                 .transactionType("CREDIT")
                 .amount(transactionDto.getAmount())
                 .build();
 
-        transactionService.saveTransaction(transactionSaveDto);
+        transactionService.saveTransaction(transactionSaveDto_Destination);
 
         return BankResponse.builder()
                 .responseCode(AccountUtils.TRANSACTION_SUCCESSFUL_CODE)
