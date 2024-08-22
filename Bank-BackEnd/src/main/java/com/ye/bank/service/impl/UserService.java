@@ -1,11 +1,17 @@
 package com.ye.bank.service.impl;
 
+import com.ye.bank.config.JwtTokenProvider;
 import com.ye.bank.dto.*;
+import com.ye.bank.entity.Role;
 import com.ye.bank.entity.UserEntity;
 import com.ye.bank.repository.UserRepo;
 import com.ye.bank.service.IUserService;
 import com.ye.bank.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +28,15 @@ public class UserService implements IUserService {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @Override
     public BankResponse createAccount(UserRequest userRequest) {
@@ -43,11 +58,13 @@ public class UserService implements IUserService {
                 .firstName(userRequest.getFirstName())
                 .lastName(userRequest.getLastName())
                 .email(userRequest.getEmail())
+                .password(passwordEncoder.encode(userRequest.getPassword()))
                 .address(userRequest.getAddress())
                 .stateOfBirth(userRequest.getStateOfBirth())
                 .phoneNumber(userRequest.getPhoneNumber())
                 .accountNumber(AccountUtils.generateAccountNumber())
                 .accountBalance(BigDecimal.ZERO)
+                .role(Role.valueOf("ROLE_USER"))
                 .alternativePhoneNumber(userRequest.getAlternativePhoneNumber())
                 .status("ACTIVE")
                 .build();
@@ -73,6 +90,29 @@ public class UserService implements IUserService {
                         .accountNumber(savedUser.getAccountNumber())
                         .accountName(savedUser.getFirstName() + "" + savedUser.getLastName())
                         .build())
+                .build();
+    }
+
+    @Override
+    public BankResponse login ( LoginDto loginDto){
+
+        Authentication authentication = null;
+
+        authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken( loginDto.getEmail() , loginDto.getPassword() )
+        );
+
+        EmailDetails loginAlert = EmailDetails.builder()
+                .subject("You're logged in")
+                .recipient(loginDto.getEmail())
+                .messageBody("You logged into your account ")
+                .build();
+
+        emailService.sendEmail(loginAlert);
+
+        return BankResponse.builder()
+                .responseCode("Login Success")
+                .responseMessage(jwtTokenProvider.generateToken(authentication))
                 .build();
     }
 

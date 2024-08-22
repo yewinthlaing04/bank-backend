@@ -24,4 +24,7 @@ public interface IUserService {
     // transaction
     @Transactional
     BankResponse transaction( TransactionDto transactionDto);
+
+    // for user login
+    BankResponse login(LoginDto loginDto);
 }
